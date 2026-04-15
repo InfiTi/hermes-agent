@@ -393,6 +393,11 @@ class BaseEnvironment(ABC):
         def _drain():
             try:
                 for line in proc.stdout:
+                    # Windows + Git Bash can interleave UTF-16LE null bytes
+                    # into an otherwise UTF-8 stream. Strip embedded \x00 so
+                    # downstream JSON serialization and model parsing work.
+                    if "\x00" in line:
+                        line = line.replace("\x00", "")
                     output_chunks.append(line)
             except UnicodeDecodeError:
                 output_chunks.clear()
